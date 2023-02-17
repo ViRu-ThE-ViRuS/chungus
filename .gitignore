@@ -1,5 +1,3 @@
 .cache/
 build/
-external/
-
 compile_commands.json
