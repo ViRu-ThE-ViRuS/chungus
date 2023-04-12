@@ -14,10 +14,15 @@ add_executable(chungus ${SOURCE_FILES} ${HEADER_FILES})
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
 set(VENDOR_DIR ${CMAKE_SOURCE_DIR}/external)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} ${VENDOR_DIR})
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set_property(TARGET chungus PROPERTY CXX_STANDARD 20)
+
+# vulkan
+find_package(Vulkan REQUIRED)
+include_directories(${Vulkan_INCLUDE_DIRS})
+target_link_libraries(chungus ${Vulkan_LIBRARIES})
 
 # GSL
 set(GSL_INCLUDE_DIRS ${VENDOR_DIR}/GSL/include)
@@ -45,9 +50,4 @@ set(glad_INCLUDE_DIRS ${VENDOR_DIR}/glad/include)
 add_subdirectory(${VENDOR_DIR}/glad)
 include_directories(${glad_INCLUDE_DIRS})
 target_link_libraries(chungus glad)
-
-# vulkan
-find_package(Vulkan REQUIRED)
-include_directories(${Vulkan_INCLUDE_DIRS})
-target_link_libraries(chungus ${Vulkan_LIBRARIES})
 

@@ -1,13 +1,9 @@
-#include <iostream>
+#include "globals.hpp"
 
-#include <GLFW/glfw3.h>
-#include <glm/vec3.hpp>
-
-#include "boost/thread.hpp"
+#include "application.hpp"
 
 int main() {
-  std::cout << glfwInit() << std::endl;
-  glm::vec3 v{1, 2, 3};
-  boost::thread t;
+  const auto width = 800, height = 600;
+  const chungus_application app{height, width, "chungus"};
   return 0;
 }
