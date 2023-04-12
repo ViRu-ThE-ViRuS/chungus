@@ -129,6 +129,30 @@ void chungus_application::initialize_graphics() {
     ASSERT(graphics_queue_family_index != -1);
   }
 
+  // get the right surface format supported by physical device
+  VkSurfaceFormatKHR surface_format = {};
+  {
+    uint32_t format_count = 0;
+    VK_CALL(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface,
+                                                 &format_count, nullptr));
+
+    std::vector<VkSurfaceFormatKHR> surface_formats{format_count};
+    vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface,
+                                         &format_count, surface_formats.data());
+
+    for (const auto &entry : surface_formats) {
+      if ((entry.format == VK_FORMAT_B8G8R8A8_SRGB) &&
+          (entry.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)) {
+        surface_format = entry;
+        break;
+      }
+    }
+  }
+
+  VkSurfaceCapabilitiesKHR device_capabilities = {};
+  VK_CALL(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface,
+                                                    &device_capabilities));
+
   // get logical vulkan device
   VkDevice device = {};
   {
@@ -155,47 +179,25 @@ void chungus_application::initialize_graphics() {
         vkCreateDevice(physical_device, &device_create_info, nullptr, &device));
   }
 
-  // get surface format
-  VkSurfaceFormatKHR surface_format = {};
-  {
-    uint32_t format_count = 0;
-    VK_CALL(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface,
-                                                 &format_count, nullptr));
-
-    std::vector<VkSurfaceFormatKHR> surface_formats{format_count};
-    vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface,
-                                         &format_count, surface_formats.data());
-
-    for (const auto &entry : surface_formats) {
-      if ((entry.format == VK_FORMAT_B8G8R8A8_SRGB) &&
-          (entry.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)) {
-        surface_format = entry;
-        break;
-      }
-    }
-  }
+  // create main graphics queue
+  VkQueue queue = {};
+  vkGetDeviceQueue(device, graphics_queue_family_index, 0, &queue);
 
   // create swapchain and set extents
   VkSwapchainKHR swapchain = {};
   VkExtent2D swap_extent = {static_cast<uint32_t>(window_width),
                             static_cast<uint32_t>(window_height)};
   {
-
-    VkSurfaceCapabilitiesKHR capabilities = {};
-    VK_CALL(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface,
-                                                      &capabilities));
-
     // physical device has max limit
-    if (capabilities.currentExtent.width != UINT32_MAX)
-      swap_extent = capabilities.currentExtent;
+    if (device_capabilities.currentExtent.width != UINT32_MAX)
+      swap_extent = device_capabilities.currentExtent;
 
     VkSwapchainCreateInfoKHR swapchain_create_info = {};
     {
       swapchain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
       swapchain_create_info.clipped = VK_TRUE;
       swapchain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-      swapchain_create_info.minImageCount = capabilities.minImageCount + 1;
-      swapchain_create_info.preTransform = capabilities.currentTransform;
+      swapchain_create_info.preTransform = device_capabilities.currentTransform;
       swapchain_create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
       swapchain_create_info.surface = surface;
       swapchain_create_info.imageArrayLayers = 1;
@@ -203,6 +205,8 @@ void chungus_application::initialize_graphics() {
       swapchain_create_info.imageExtent = swap_extent;
       swapchain_create_info.imageFormat = surface_format.format;
       swapchain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+      swapchain_create_info.minImageCount =
+          device_capabilities.minImageCount + 1;
       swapchain_create_info.imageUsage =
           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     }
@@ -225,7 +229,7 @@ void chungus_application::initialize_graphics() {
   swap_image_views.resize(swap_images.size());
   {
 
-    VkImageViewCreateInfo view_create_info;
+    VkImageViewCreateInfo view_create_info = {};
     view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     view_create_info.format = surface_format.format;
     view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -243,9 +247,6 @@ void chungus_application::initialize_graphics() {
                                 &swap_image_views[idx]) != VK_SUCCESS);
     }
   }
-
-  VkQueue queue = {};
-  vkGetDeviceQueue(device, graphics_queue_family_index, 0, &queue);
 }
 
 void chungus_application::main_loop() {
