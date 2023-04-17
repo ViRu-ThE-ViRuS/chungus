@@ -56,9 +56,3 @@ set(GLM_INCLUDE_DIRS ${VENDOR_DIR}/glm)
 add_subdirectory(${VENDOR_DIR}/glm)
 include_directories(${GLM_INCLUDE_DIRS})
 
-# glad
-set(glad_INCLUDE_DIRS ${VENDOR_DIR}/glad/include)
-add_subdirectory(${VENDOR_DIR}/glad)
-include_directories(${glad_INCLUDE_DIRS})
-target_link_libraries(chungus glad)
-
