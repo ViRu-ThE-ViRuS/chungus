@@ -15,9 +15,20 @@ include_directories(${CMAKE_SOURCE_DIR}/src)
 
 set(VENDOR_DIR ${CMAKE_SOURCE_DIR}/external)
 set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} ${VENDOR_DIR})
+set(SHADER_SRC_DIR ${CMAKE_SOURCE_DIR}/src/shaders)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD 20)
 set_property(TARGET chungus PROPERTY CXX_STANDARD 20)
+
+# compile and copy shaders to build dir on make
+add_custom_command(
+  TARGET chungus POST_BUILD
+  COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/shaders
+
+  # compile default shaders into build dir
+  COMMAND glslangValidator -V ${SHADER_SRC_DIR}/default.frag -o $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders/default.frag.spv
+  COMMAND glslangValidator -V ${SHADER_SRC_DIR}/default.vert -o $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders/default.vert.spv)
 
 # vulkan
 find_package(Vulkan REQUIRED)
